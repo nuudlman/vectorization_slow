@@ -1,4 +1,5 @@
-This is a quick-and-dirty repro of a vectorization fail.
+This is a quick-and-dirty repro of a vectorization fail. It should work with LLVM 21 and 22-git; the nix flake uses LLVM 21.
+
 
 mnist.mlir is the Flax Linen MNIST CNN example exported to StableHLO and then lowered to Linalg.
 I've done this already, as StableHLO needs to be compiled from source.
