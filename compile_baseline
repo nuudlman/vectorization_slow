@@ -1,0 +1,34 @@
+#!/bin/sh
+
+mlir-opt mnist.mlir \
+    --one-shot-bufferize='bufferize-function-boundaries=1 function-boundary-type-conversion=identity-layout-map' \
+    --buffer-results-to-out-params='hoist-static-allocs=1' \
+    --drop-equivalent-buffer-results \
+    --promote-buffers-to-stack \
+    --buffer-deallocation-pipeline \
+    --optimize-allocation-liveness \
+    --convert-linalg-to-affine-loops \
+    --fold-memref-alias-ops \
+    --expand-strided-metadata \
+    --canonicalize \
+    --cse \
+    --lower-affine \
+    --canonicalize \
+    --cse \
+    --convert-scf-to-cf \
+    --canonicalize \
+    --cse \
+    --llvm-request-c-wrappers \
+    --memref-expand \
+    --convert-to-llvm='dynamic=1' \
+    --reconcile-unrealized-casts \
+    --llvm-legalize-for-export \
+    --symbol-privatize='exclude=_mlir_ciface_main' \
+    --canonicalize \
+    --cse \
+    --inline \
+    --canonicalize \
+    --cse \
+    | mlir-translate --mlir-to-llvmir -o baseline.ll
+
+clang++ -O3 -flto -Wno-override-module -o baseline runner.cpp baseline.ll -lmlir_c_runner_utils

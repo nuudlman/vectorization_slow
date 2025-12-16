@@ -1,5 +1,8 @@
 This is a quick-and-dirty repro of a vectorization fail. It should work with LLVM 21 and 22-git; the nix flake uses LLVM 21.
 
+To compile the baseline version without vectorization, run the compile_baseline script. 
+On LLVM 22, you will need to add `modify-public-functions=1` to the options of the `--buffer-results-to-out-params` pass.
+
 
 mnist.mlir is the Flax Linen MNIST CNN example exported to StableHLO and then lowered to Linalg.
 I've done this already, as StableHLO needs to be compiled from source.
