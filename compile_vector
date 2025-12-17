@@ -1,0 +1,40 @@
+#!/bin/sh
+
+rm -rf vector_ir
+mkdir vector_ir
+
+mlir-opt mnist.mlir --mlir-print-ir-after-all --mlir-print-ir-tree-dir=./vector_ir \
+    --one-shot-bufferize='bufferize-function-boundaries=1 function-boundary-type-conversion=identity-layout-map' \
+    --buffer-results-to-out-params='hoist-static-allocs=1' \
+    --drop-equivalent-buffer-results \
+    --promote-buffers-to-stack \
+    --buffer-deallocation-pipeline \
+    --optimize-allocation-liveness \
+    --convert-linalg-to-affine-loops \
+    --fold-memref-alias-ops \
+    --expand-strided-metadata \
+    --canonicalize \
+    --cse \
+    --affine-expand-index-ops-as-affine \
+    --affine-super-vectorize='virtual-vector-size=4' \
+    --lower-affine \
+    --canonicalize \
+    --cse \
+    --convert-scf-to-cf \
+    --canonicalize \
+    --cse \
+    --llvm-request-c-wrappers \
+    --memref-expand \
+    --convert-vector-to-llvm \
+    --convert-to-llvm='dynamic=1' \
+    --reconcile-unrealized-casts \
+    --llvm-legalize-for-export \
+    --symbol-privatize='exclude=_mlir_ciface_main' \
+    --canonicalize \
+    --cse \
+    --inline \
+    --canonicalize \
+    --cse \
+    | mlir-translate --mlir-to-llvmir -o vector.ll
+
+clang++ -O3 -flto -Wno-override-module -o vector runner.cpp vector.ll -lmlir_c_runner_utils
